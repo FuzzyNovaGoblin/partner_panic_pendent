@@ -1,17 +1,10 @@
 #![no_std]
 #![no_main]
 
-use core::cell::RefCell;
-use critical_section::Mutex;
 use embassy_executor::Spawner;
 use embassy_futures::select::{select, Either};
-use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex,
-    signal::Signal,
-};
-use embassy_time::{Duration, Ticker, Timer};
-use embedded_storage::{ReadStorage, Storage};
-use esp_alloc as _;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
+use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_backtrace as _;
 use esp_hal::{
@@ -20,10 +13,9 @@ use esp_hal::{
     time::now,
 };
 use esp_println::println;
-use esp_storage::FlashStorage;
 use esp_wifi::esp_now::{ReceivedData, BROADCAST_ADDRESS};
 use log::info;
-use partner_panic_pendent::buttonEvent::ButtonEvent;
+use partner_panic_pendent::button_event::ButtonEvent;
 
 extern crate alloc;
 
@@ -126,14 +118,16 @@ async fn main(spawner: Spawner) {
                 match event {
                     ButtonEvent::None => (),
                     ButtonEvent::Panic => {
-                        let status = esp_now.send_async(&BROADCAST_ADDRESS, &event.to_bstring()).await;
+                        let status = esp_now
+                            .send_async(&BROADCAST_ADDRESS, event.to_bstring())
+                            .await;
                         println!("status: {:?}", status);
                     }
                 }
             }
             Either::Second(r) => {
                 info!("received {:?}", r);
-                match ButtonEvent::from_bstring(r.data()){
+                match ButtonEvent::from_bstring(r.data()) {
                     ButtonEvent::None => (),
                     ButtonEvent::Panic => run_vibrator(1000, &mut vibrator_pin).await,
                 }

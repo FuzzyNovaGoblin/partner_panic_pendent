@@ -16,7 +16,7 @@ impl ButtonEvent {
     }
 
     pub fn from_bstring(bytes: &[u8]) -> ButtonEvent {
-        info!("processing {:?}",bytes);
+        info!("processing {:?}", bytes);
         match bytes {
             b"PANIC" => dbg!(ButtonEvent::Panic),
             _ => dbg!(ButtonEvent::None),
